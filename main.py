@@ -1,8 +1,11 @@
+from logging import error
+from matplotlib import artist
 import numpy as np
 import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from numpy.lib.arraysetops import isin
 
 SERIE = "Série"
 PARALELLE = "Parallèle"
@@ -81,18 +84,75 @@ def calcul_tensions(frequences, r, c, circuit_type, time, amplitude=1):
 
     return tensions
 
+def check_val(*vals, type_val=float, positive_only=True, croissant=False):
+    errors = []
+    new_vals = []
+    for val in vals:
+        try:
+            val = type_val(val)
+        except ValueError:
+            errors.append(f"Erreur: {val} doit être un nombre.")
+            continue
+        if type_val in (float, int):
+            if positive_only and val<0:
+                errors.append(f"Erreur: {val} doit être un positif.")
+                continue
+        new_vals.append(val)
+
+    sorted_vals = list(new_vals).copy()
+    sorted_vals.sort()
+    if croissant and new_vals != sorted_vals:
+        errors.append(f"Erreur: les valeurs doivent être croissantes.")
+        return [], errors
+    else:
+        return new_vals, errors
+
+            
+
+
 def gen_plot():
+    for widget in param_frame.winfo_children():
+        if isinstance(widget, tk.Label) and widget.cget("fg") == "red":
+            widget.destroy()
+
     try:
-        freq_deb = float(frequence_deb_input.get())
-        freq_fin = float(frequence_fin_input.get())
-        r = float(r_input.get())
-        c = float(c_input.get())
-        time_deb = float(temps_deb_input.get())
-        time_fin = float(temps_fin_input.get())
+        freq_deb = frequence_deb_input.get()
+        freq_fin = frequence_fin_input.get()
+        r = r_input.get()
+        c = c_input.get()
+        time_deb = temps_deb_input.get()
+        time_fin = temps_fin_input.get()
         circuit_type = circuit_type_select.get()
     except Exception as e:
-        print("Saisie invalide")
+        print("Erreur")
         print(e)
+        return
+
+    error_message = ""
+
+    res = check_val(freq_deb, freq_fin, croissant=True)
+    if not res[1]:
+        freq_deb, freq_fin = res[0]
+    else:
+        for m in res[1]:
+            error_message+=f"{m}\n"
+    
+    res = check_val(time_deb, time_fin, croissant=True)
+    if not res[1]:
+        time_deb, time_fin = res[0]
+    else:
+        for m in res[1]:
+            error_message+=f"{m}\n"
+
+    res = check_val(r, c)
+    if not res[1]:
+        r, c = res[0]
+    else:
+        for m in res[1]:
+            error_message+=f"{m}\n"
+    if error_message:
+        error_message = tk.Label(param_frame, text=error_message, fg="red")
+        error_message.pack()
         return
 
     frequences = np.logspace(np.log10(freq_deb), np.log10(freq_fin), num=100, base=10)
@@ -113,7 +173,8 @@ def gen_plot():
     graph_grains.set_ylabel("Gain (dB)")
     graph_grains.set_title(f"Gain d'un circuit RC en {circuit_type}")
     if circuit_type in [SERIE, PARALELLE]:
-        graph_grains.axvline(x=1 / (2 * np.pi * r * c), color='black')
+        graph_grains.legend((f"Frequence de coupure : {(1/(2 * np.pi * r * c)):.2f} Hz",))
+        graph_grains.axvline(x=1/(2 * np.pi * r * c), color='black')
 
     # Graphique de déphasage
     graph_dephasage = graphs.add_subplot(3, 1, 2)
@@ -128,7 +189,7 @@ def gen_plot():
         graph_tension.plot(time, tension)
     graph_tension.set_xlabel("Temps (s)")
     graph_tension.set_ylabel("Tension (V)")
-    graph_tension.set_title(f"{circuit_type} Tension du circuit")
+    graph_tension.set_title(f"Tension du circuit ({circuit_type})")
     
     graphs.subplots_adjust(hspace=0.995)
     canvas = FigureCanvasTkAgg(graphs, master=graph_frame)
@@ -149,11 +210,14 @@ param_frame = tk.Frame(root)
 param_frame.pack(side=tk.LEFT)
 
 # List des types de circuit
-circuit_type_label = tk.Label(param_frame, text="Type du Circuit :")
-circuit_type_label.pack()
-circuit_type_select = ttk.Combobox(param_frame, values=[SERIE, PARALELLE, WIEN])
+circuit_type_frame = tk.Frame(param_frame)
+circuit_type_frame.pack(anchor="w")
+
+circuit_type_label = tk.Label(circuit_type_frame, text="Type du Circuit :")
+circuit_type_label.pack(side=tk.LEFT)
+circuit_type_select = ttk.Combobox(circuit_type_frame, values=[SERIE, PARALELLE, WIEN])
 circuit_type_select.set(SERIE)
-circuit_type_select.pack()
+circuit_type_select.pack(side=tk.RIGHT)
 
 # Frequences
 freq_frame1 = tk.Frame(param_frame)
@@ -217,4 +281,5 @@ plot_button.pack()
 graph_frame = tk.Frame(root)
 graph_frame.pack(side=tk.RIGHT)
 
-root.mainloop()
+if __name__ == "__main__":
+    root.mainloop()
