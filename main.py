@@ -19,8 +19,9 @@ def calcul_gains(frequences, r, c, circuit_type):
 
     elif circuit_type == PARALELLE:
         for f in frequences:
-            impedance = 1 / (1j * 2 * np.pi * f * r * c)
-            gain = np.abs(impedance / (1 + impedance))
+            omega = 2 * np.pi * f
+            impedance = 1 / (1j * omega * r * c)
+            gain = 1 / np.sqrt(1 + np.abs(impedance)**2)
             gains.append(gain)
 
     elif circuit_type == WIEN:
