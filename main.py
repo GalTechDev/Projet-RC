@@ -26,7 +26,7 @@ def calcul_gains(frequences, r, c, circuit_type):
 
     elif circuit_type == WIEN:
         for f in frequences:
-            gain = np.abs((1 - 2j * np.pi * f * r * c) / (1 + 2j * np.pi * f * r * c))
+            gain = np.abs(1 / (2 * np.pi * f * c) / 3)
             gains.append(gain)
 
     else:
