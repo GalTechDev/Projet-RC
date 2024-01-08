@@ -1,15 +1,15 @@
-from logging import error
-from matplotlib import artist
 import numpy as np
 import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from numpy.lib.arraysetops import isin
+from matplotlib import rcParams
 
 SERIE = "Série"
 PARALELLE = "Parallèle"
 WIEN = "Pont de Wien"
+
+THEME = "breeze"
 
 def calcul_gains(frequences, r, c, circuit_type):
     gains = []
@@ -166,7 +166,12 @@ def gen_plot():
         widget.destroy()
 
     # Graphiques de gains
-    graphs = plt.figure()
+    if root.winfo_width()-param_frame.winfo_width() == 1:
+        size = None
+    else:
+        size = [(root.winfo_width()-param_frame.winfo_width())/rcParams['figure.dpi'], (root.winfo_height()-40)/rcParams['figure.dpi']]
+
+    graphs = plt.figure(figsize=size)
     graph_grains = graphs.add_subplot(3, 1, 1)
     graph_grains.semilogx(frequences[:len(gains)], 20 * np.log10(gains))
     graph_grains.set_xlabel("Fréquence (Hz)")
@@ -202,84 +207,90 @@ def gen_plot():
     canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
 # Fenetre Tkinter
-root = tk.Tk()
+try:
+    from ttkthemes import ThemedTk
+    root = ThemedTk(theme=THEME)
+except:
+    root = tk.Tk()
+
 root.title("Analyse d'un circuit RC")
 
 # Frame des parametres
-param_frame = tk.Frame(root)
+param_frame = ttk.Frame(root)
 param_frame.pack(side=tk.LEFT)
 
 # List des types de circuit
-circuit_type_frame = tk.Frame(param_frame)
+circuit_type_frame = ttk.Frame(param_frame)
 circuit_type_frame.pack(anchor="w")
 
-circuit_type_label = tk.Label(circuit_type_frame, text="Type du Circuit :")
+circuit_type_label = ttk.Label(circuit_type_frame, text="Type du Circuit :")
 circuit_type_label.pack(side=tk.LEFT)
 circuit_type_select = ttk.Combobox(circuit_type_frame, values=[SERIE, PARALELLE, WIEN])
 circuit_type_select.set(SERIE)
 circuit_type_select.pack(side=tk.RIGHT)
 
 # Frequences
-freq_frame1 = tk.Frame(param_frame)
+freq_frame1 = ttk.Frame(param_frame)
 freq_frame1.pack(anchor="w")
-freq_frame2 = tk.Frame(param_frame)
+freq_frame2 = ttk.Frame(param_frame)
 freq_frame2.pack(anchor="w")
 
-frequence_deb_label = tk.Label(freq_frame1, text="Frequence début (Hz):")
+frequence_deb_label = ttk.Label(freq_frame1, text="Frequence début (Hz):")
 frequence_deb_label.pack(side=tk.LEFT)
-frequence_deb_input = tk.Entry(freq_frame1)
+frequence_deb_input = ttk.Entry(freq_frame1)
 frequence_deb_input.insert(0, "10")
 frequence_deb_input.pack(side=tk.RIGHT)
 
-frequence_fin_label = tk.Label(freq_frame2, text="Frequence fin (Hz):")
+frequence_fin_label = ttk.Label(freq_frame2, text="Frequence fin (Hz):")
 frequence_fin_label.pack(side=tk.LEFT)
-frequence_fin_input = tk.Entry(freq_frame2)
+frequence_fin_input = ttk.Entry(freq_frame2)
 frequence_fin_input.insert(0, "100000")
 frequence_fin_input.pack(side=tk.RIGHT)
 
 # RC
-r_frame = tk.Frame(param_frame)
+r_frame = ttk.Frame(param_frame)
 r_frame.pack(anchor="w")
-c_frame = tk.Frame(param_frame)
+c_frame = ttk.Frame(param_frame)
 c_frame.pack(anchor="w")
 
-r_label = tk.Label(r_frame, text="R (ohms):")
+r_label = ttk.Label(r_frame, text="R (ohms):")
 r_label.pack(side=tk.LEFT)
-r_input = tk.Entry(r_frame)
+r_input = ttk.Entry(r_frame)
 r_input.insert(0, "1000")
 r_input.pack(side=tk.RIGHT)
 
-c_label = tk.Label(c_frame, text="C (farads):")
+c_label = ttk.Label(c_frame, text="C (farads):")
 c_label.pack(side=tk.LEFT)
-c_input = tk.Entry(c_frame)
+c_input = ttk.Entry(c_frame)
 c_input.insert(0, "1e-6")
 c_input.pack(side=tk.RIGHT)
 
 # Periode de l'etude
-temps_frame1 = tk.Frame(param_frame)
+temps_frame1 = ttk.Frame(param_frame)
 temps_frame1.pack(anchor="w")
-temps_frame2 = tk.Frame(param_frame)
+temps_frame2 = ttk.Frame(param_frame)
 temps_frame2.pack(anchor="w")
 
-temps_deb_label = tk.Label(temps_frame1, text="Temps debut (s):")
+temps_deb_label = ttk.Label(temps_frame1, text="Temps debut (s):")
 temps_deb_label.pack(side=tk.LEFT)
-temps_deb_input = tk.Entry(temps_frame1)
+temps_deb_input = ttk.Entry(temps_frame1)
 temps_deb_input.insert(0, "0")
 temps_deb_input.pack(side=tk.RIGHT)
 
-temps_fin_label = tk.Label(temps_frame2, text="Temps fin (s):")
+temps_fin_label = ttk.Label(temps_frame2, text="Temps fin (s):")
 temps_fin_label.pack(side=tk.LEFT)
-temps_fin_input = tk.Entry(temps_frame2)
+temps_fin_input = ttk.Entry(temps_frame2)
 temps_fin_input.insert(0, "0.01")
 temps_fin_input.pack(side=tk.RIGHT)
 
 # Bouton pour générer le graphique
-plot_button = tk.Button(param_frame, text="Générer", command=gen_plot)
+plot_button = ttk.Button(param_frame, text="Générer", command=gen_plot)
 plot_button.pack()
 
 # Frame pour le graphique
-graph_frame = tk.Frame(root)
+graph_frame = ttk.Frame(root)
 graph_frame.pack(side=tk.RIGHT)
 
 if __name__ == "__main__":
+    
     root.mainloop()
