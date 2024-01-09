@@ -84,7 +84,7 @@ def calcul_tensions(frequences, r, c, circuit_type, time, amplitude=1):
 
     return tensions
 
-def check_val(*vals, type_val=float, positive_only=True, croissant=False):
+def check_val(*vals, type_val=float, positive_only=True, croissant=False, null=True):
     errors = []
     new_vals = []
     for val in vals:
@@ -97,6 +97,9 @@ def check_val(*vals, type_val=float, positive_only=True, croissant=False):
             if positive_only and val<0:
                 errors.append(f"Erreur: {val} doit être un positif.")
                 continue
+            if not null and val==0:
+                errors.append(f"Erreur: {val} doit être non null.")
+                continue
         new_vals.append(val)
 
     sorted_vals = list(new_vals).copy()
@@ -105,6 +108,7 @@ def check_val(*vals, type_val=float, positive_only=True, croissant=False):
         errors.append(f"Erreur: les valeurs doivent être croissantes.")
         return [], errors
     else:
+        print(new_vals, errors, positive_only)
         return new_vals, errors
 
             
@@ -144,7 +148,7 @@ def gen_plot():
         for m in res[1]:
             error_message+=f"{m}\n"
 
-    res = check_val(r, c)
+    res = check_val(r, c, null=False)
     if not res[1]:
         r, c = res[0]
     else:
@@ -292,5 +296,4 @@ graph_frame = ttk.Frame(root)
 graph_frame.pack(side=tk.RIGHT)
 
 if __name__ == "__main__":
-    
     root.mainloop()
